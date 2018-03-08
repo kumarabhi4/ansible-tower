@@ -1,0 +1,53 @@
+---
+
+- name: This playbook will install, configure and deploy web page in nginx web server
+  hosts: all
+  become: yes
+  vars_files:
+   - variables_file
+  tasks:
+    - name: Install nginx web server in Ubuntu
+      apt: name=nginx state=present update_cache=yes
+      when: ( ansible_distribution == "Ubuntu" and ansible_os_family == "Debian" )
+
+    - name: Install epel release package in CentOS 
+      yum: name=epel-release state=present
+      when: ( ansible_distribution == "CentOS" and ansible_os_family == "RedHat" )
+
+    - name: Install nginx web server in CentOS 
+      yum: name=nginx state=present
+      when: ( ansible_distribution == "CentOS" and ansible_os_family == "RedHat" )
+
+    - name: Configure nginx web server in Ubuntu
+      copy: src=nginx_ubuntu.conf dest=/etc/nginx/nginx.conf 
+      notify: 
+        - Restart nginx web server
+      when: ( ansible_distribution == "Ubuntu" and ansible_os_family == "Debian" )
+
+    - name: Configure nginx web server in CentOS 
+      copy: src=nginx_centos.conf dest=/etc/nginx/nginx.conf 
+      when: ( ansible_distribution == "CentOS" and ansible_os_family == "RedHat" )
+      notify: 
+        - Restart nginx web server
+
+    - name: Configure web root folder in Ubuntu
+      copy: src=default_ubuntu dest=/etc/nginx/sites-available/default
+      when: ( ansible_distribution == "Ubuntu" and ansible_os_family == "Debian" )
+      notify: 
+        - Restart nginx web server
+
+    - name: Deploy web page in nginx 
+      template: src=index.html.j2 dest=/usr/share/nginx/html/index.html 
+
+  handlers:
+    - name: Restart nginx web server
+      service: name=nginx state=restarted
+   
+
+
+
+
+
+
+
+...
